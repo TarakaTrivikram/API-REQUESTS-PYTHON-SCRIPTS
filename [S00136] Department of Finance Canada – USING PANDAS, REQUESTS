@@ -1,0 +1,39 @@
+[S00136] Department of Finance Canada – USING PANDAS, REQUESTS
+
+##################################################
+# Pavan Kumar Reddy Chilukuri , Creation Date: 10/04/2013
+# Contrib C27142, Source Id 136
+#Bhavani Chittukula as on 29/09/2020; Modified link
+##################################################
+from __future__ import unicode_literals
+import pandas as pd
+import requests
+import html5lib
+import time
+##################################################
+# Mandatory section 1/2
+# Import and Main program function
+import spyder
+def run(parameters):
+    with spyder.browser(version='4692') as browser:
+##################################################
+
+        url="https://www.canada.ca/en/department-finance/services/publications/fiscal-monitor/2023/03.html"
+        df=pd.read_html(url)
+        table=df[4]
+
+        # Spyder lines for downloading and saving files
+        outputfilename = parameters.download_directory+'\\'+'C23559.html'
+        browser.browser.downloaded_file.append([{'filename':outputfilename}])
+        browser.browser.writeline_log('FILE;{0};{1};'.format(outputfilename, os.stat(outputfilename).st_size))
+
+
+##################################################
+# Mandatory section 2/2
+# Main program that starts the script
+# Do not edit this section and keep it
+# at the end of the script file
+if __name__ == '__main__':
+    spyder.runthread(__file__)
+
+##################################################
