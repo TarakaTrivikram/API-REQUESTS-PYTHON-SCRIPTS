@@ -1,0 +1,477 @@
+[11668] HOLDINGS USING GLOB, PANDAS,OS,ITERTOOLS, OPENPYXL
+# Name:        C11668_1
+# Purpose:
+#
+# Author:      Mac Kevin Dawson
+#
+# Created:     07/06/2021
+# Copyright:   (c) Mac Kevin Dawson 2021
+# Licence:     <your licence>
+#-------------------------------------------------------------------------------
+
+from __future__ import unicode_literals
+import time
+
+################################################################################
+# Mandatory import
+import spyder
+import glob
+import pandas as pd
+import os
+import itertools
+import openpyxl
+def run(parameters):
+    with spyder.browser(version='4700', browser_version=105) as browser:
+################################################################################
+
+        links = ['https://am.gs.com/en-gb/institutions/funds/detail/PV103356/IE00BJSBC011/goldman-sachs-access-china-government-bond-ucits-etf'
+                ,'https://am.gs.com/en-gb/institutions/funds/detail/PV104077/IE0003MKK4H3/goldman-sachs-access-uk-gilts-1-10-years-ucits-etf'
+                ,'https://am.gs.com/en-gb/institutions/funds/detail/PV105256/IE000SYQFJV2/goldman-sachs-global-green-bond-ucits-etf']
+
+        browser.home_address(links[0])
+        if browser.search("Select*Investor Type",exitmode=False):
+            browser.search("Change")
+            browser.click()
+            browser.search("United Kingdom (en)")
+            browser.click()
+            browser.search("Institutional Investor")
+            browser.click()
+            browser.search("Accept and Continue")
+            browser.double_click()
+            time.sleep(3)
+
+        for link in links:
+            browser.home_address(link)
+            time.sleep(10)
+            browser.search(clas="fund-name-header-styles-header-and-ticker-container")
+            fname=browser.getelementinfo("text").split("UCITS")[0].strip()
+
+            browser.waitfor("All Holdings")
+            browser.download()
+
+
+            for i in range(10):
+                   time.sleep(5)
+
+                   if glob.glob(browser.browser.parameters.download_directory+'\\'+fname+'*xlsx'):
+                       files = glob.glob(browser.browser.parameters.download_directory+'\\'+fname+'*xlsx')
+                       print files
+                       file_path = files[-1]
+
+                       break
+
+            check = os.path.exists(file_path)
+            for i in range(10):
+                   if check == True:
+                    #Read xlsx file using openpyxl
+                       path = file_path
+                       wb_obj  = openpyxl.load_workbook(path, data_only=True)
+                       sheet_obj = wb_obj.active
+
+                       raw_rows = []
+                       for row in sheet_obj.iter_rows():
+                            raw_rows.append([cell.internal_value for cell in row])
+
+                    # save file using pandas
+                       df = pd.DataFrame(raw_rows)
+
+                       #Directory of output file of pandas
+                       outputfilename = browser.browser.parameters.download_directory + '\\'+fname+'.csv'
+
+                       #Save dataframe to csv file type
+                       df.to_csv(outputfilename,index=False, header=False, encoding='utf-8-sig', sep=str(';'))
+
+                       #File handling/management part of Spyder (backend purposes)
+                       downloadfile_request = {}
+                       downloadfile_request["filename"] = outputfilename
+                       browser.browser.downloadfile_requests.append(downloadfile_request)
+                       browser.browser.downloadfile_requests.pop(0)
+                       browser.browser.writeline_log('FILE;{0};{1};'.format(outputfilename, os.stat(outputfilename).st_size))
+                       break
+ 
+
+[C05843] [ECON]
+
+##################################################
+# Suneel K , Creation Date: 28/11/2017
+# Contrib C05843, Source Id 933
+# Srinivas Reddy Eppa, 25/07/2019: Modified python and upgraded version.
+##################################################
+
+##################################################
+from __future__ import unicode_literals
+import pandas as pd
+import requests
+import os
+##################################################
+# Mandatory section 1/2
+# Import and Main program function
+import spyder
+def run(parameters):
+    with spyder.browser(version='4692') as browser:
+##################################################
+        resp = requests.get("https://www.censtatd.gov.hk/api/get.php?id=410-50011&lang=en&param=N4KABGBEDGBukC4yghSBhA8gVQHIBUAlATUTAG1xU0A2AZgEZIAaK6yGhgJhbdUgaDe1WgE4A7MJEcGk1iKg0uTedPp0p7GqI2qtogCyb+nUZD4BdKgF9VkAM7wkKfgDUAggBkA+vnxlKBUhiAHtibwYAEwAHbwBSb3tjNEIAQwB3bwBZbwALAGtI70jzaisIWypIaIBTACcASxCS5z4HABdUuvaySC4ABi4Bphs7BpaoAwZ+gFoAVn7+oTsAG1SAOwBzXpr182sgA",verify=False)
+        data = resp.json()
+
+        df = pd.DataFrame(data['dataSet'])
+        df['figure'] = df['figure'].apply(lambda x: x if bool(x) else 0)
+
+        df = df[["COUNTRY",'COUNTRYDesc','period', 'svDesc','figure']]
+        df = df.rename(columns={"COUNTRYDesc":"Countries"})
+
+        df = df.pivot_table(columns=['svDesc','period'], index=["COUNTRY",'Countries'], values="figure", fill_value="")
+        df = df.applymap(lambda x: x if bool(x) else "")
+
+        outputfilename = parameters.download_directory + '\\' + parameters.thread_name + ".csv"
+        df.to_csv(outputfilename)
+        browser.browser.downloaded_file.append([{"filename":outputfilename}])
+        browser.browser.writeline_log('FILE;{0};{1};'.format(outputfilename, os.stat(outputfilename).st_size))
+
+
+##################################################
+# Mandatory section 2/2
+# Main program that starts the script
+# Do not edit this section and keep it
+# at the end of the script file
+if __name__ == '__main__':
+    spyder.runthread(__file__)
+
+
+##################################################
+
+ 
+
+
+[C19016][ECON]
+Hi Team,
+
+Regarding source 71 in all the browser version getting "The webpage at https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_bill_rates&field_tdr_date_value_month=202505 might be temporarily down or it may have moved permanently to a new web address." HTTP protocol error"
+
+I tried using lxml and requests. it is working fine. It will not affect recovery process. 
+
+
+
+##################################################
+
+# Bhavani Chittukula , Creation Date: 15/02/2021
+# Contrib C19016, Source Id 71
+##################################################
+
+##################################################
+from __future__ import unicode_literals
+import requests
+import pandas as pd
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+from lxml import html
+import os
+
+
+##################################################
+# Mandatory section 1/2
+# Import and Main program function
+import spyder
+import time
+def run(parameters):
+    with spyder.post('https://localhost') as post:
+##################################################
+
+        url = 'https://home.treasury.gov/policy-issues/financing-the-government/interest-rate-statistics'
+        r = requests.get(url, verify = False).content
+        print(r)
+
+        page = html.fromstring(r)
+        link=page.xpath('//a/@href')
+
+        link = page.xpath('//a[contains(@href,"resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_long_term_")]//@href')[0]
+        print(link)
+        link = 'https://home.treasury.gov/'+link
+        print(link)
+        r2 = requests.get(link,verify = False,allow_redirects = True)
+        #Write content into file
+        filename = os.path.join(post.parameters.download_directory, 'C19016.html')
+
+        with open(filename,'wb') as f:
+              f.write(r2.content)
+        post.downloaded_files.append(filename)
+        print('Downloaded {0}'.format(filename))
+        post.writeline_log('FILE;{0};{1};'.format(filename, os.stat(filename).st_size))
+
+##################################################
+# Mandatory section 2/2
+# Main program that starts the script
+# Do not edit this section and keep it
+# at the end of the script file
+if __name__ == '__main__':
+    spyder.runthread(__file__)
+
+##################################################
+ 
+
+DOWNLOADING PDF FILE USING REQUESTS AND LXML
+##################################################
+from __future__ import unicode_literals
+
+import time
+import requests
+from lxml import html
+import os
+
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+##################################################
+# Mandatory section 1/2
+# Import and Main program function
+import spyder
+def run(parameters):
+    with spyder.post('http://localhost') as post:
+##    with spyder.browser(version='4700') as browser:
+##################################################
+        url = "https://ncreif.org/news/"
+        response = requests.get(url,verify=False)
+        tree=response.content
+        #print(tree)
+
+        # Parse the HTML content
+        tree = html.fromstring(response.content)
+
+        # Use XPath to find anchor tags with the desired href
+        links = tree.xpath('//a[contains(@href, "Expanded-NPI-Snapshot-Flash-")]')
+        href = links[0].get("href")
+
+        pdf_url = "https://ncreif.org/" + href
+        response = requests.get(pdf_url, verify=False)
+        outputfilename = "%s\%s.pdf"%(parameters.download_directory,parameters.thread_name)
+        if response.status_code == 200:
+            with open(outputfilename, "wb") as f:
+                f.write(response.content)
+        else:
+            print("Failed to download:", response.status_code)
+
+
+        print(outputfilename)
+
+        post.downloaded_files.append(outputfilename)
+        post.writeline_log('FILE;{0};'.format(outputfilename))
+
+##################################################
+# Mandatory section 2/2
+# Main program that starts the script
+# Do not edit this section and keep it
+# at the end of the script file
+if __name__ == '__main__':
+    spyder.runthread(__file__)
+
+##################################################	
+
+ 
+DOWNLOADING EXCEL FILE USING REQUESTS AND OS
+
+
+##################################################
+# Pavan Kumar Reddy Chilukuri , Creation Date: 02/05/2012
+# Contrib C18135, Source Id 2018
+##################################################
+# Ramesh Reddy Pullur : Modified date : 09/04/2013 => website Changed, Py re-written from home page...
+# Jahnavi Kandakatla, Modified Date: 17/2/2014 --> Wrong file downloaded: Made a slight change in the selection of the file.
+# Dinesh Gumra, Modified Date : 02/09/2016 - Version Upgrade to 3760, Cleaned * from Spyder Profile.
+# Manisha reddy : 12/07/2018: Changed the version and modified search statements
+#Bhavani Chittukula as on 14/10/2019; Modified as per path change
+##################################################
+from __future__ import unicode_literals
+
+##################################################
+# Mandatory section 1/2
+# Import and Main program function
+import spyder
+import requests
+import os
+def run(parameters):
+    with spyder.browser(version="4700") as browser:
+##################################################
+
+        browser.home_address("https://rigcount.bakerhughes.com/na-rig-count")
+
+        browser.waitfor("North America Rig Count Report")
+        file = requests.get(browser.getelementinfo("link"),verify=False)
+
+        output_filename = os.path.join(parameters.download_directory,parameters.thread_name+".xlsx")
+
+        with open(output_filename,"wb") as f:
+            f.write(file.content)
+
+        browser.browser.downloaded_file.append({'filename':output_filename})
+        browser.browser.writeline_log('FILE;{0};{1};'.format(output_filename, os.stat(output_filename).st_size))
+
+##################################################
+# Mandatory section 2/2
+# Main program that starts the script
+# Do not edit this section and keep it
+# at the end of the script file
+if __name__ == '__main__':
+    spyder.runthread(__file__)
+
+##################################################
+
+
+
+ 
+
+DOWNLOADING PDF FILE USING REQUESTS
+# Name:        C02381_1
+# Purpose:
+#
+# Author:      Michael Angelo Esporlas
+#
+# Created:     09/01/2020
+# Copyright:   (c) Michael Angelo Esporlas 2020
+# Licence:     <your licence>
+#-------------------------------------------------------------------------------
+
+from __future__ import unicode_literals
+import time
+################################################################################
+# Mandatory import
+import spyder
+import os
+import requests
+def run(parameters):
+    with spyder.browser(version='4710') as browser:
+################################################################################
+        # add commands
+        browser.home_address("https://www.quadrigafunds.es/annual-accounts-quadriga-investors/")
+
+        browser.timeout=5
+        if browser.search(id="btn_professional",exitmode=False):
+            browser.click()
+
+        browser.waitfor("Annual Accounts*Investors")
+        flink=browser.xpath_buffer+"/parent::a"
+        browser.search_via_xpath(flink)
+        time.sleep(3)
+        furl= browser.getelementinfo("link")
+    # We are having timeout issues on downloading static-file using the conventional method hence using requests to read and collect the pdf file
+        response=requests.get(furl,verify=False)
+    # create pdf file path
+        with open(parameters.download_directory+"\\C02381.pdf", 'wb') as f:
+            f.write(response.content)
+
+    # download
+        outputfilename = parameters.download_directory+"\\C02381.pdf"
+        browser.browser.downloaded_file.append([{"filename":outputfilename}])
+        browser.browser.writeline_log('FILE;{0};{1};'.format(outputfilename, os.stat(outputfilename).st_size))
+
+################################################################################
+# Mandatory section
+if __name__ == '__main__':
+    spyder.runthread(__file__,)
+##################################################
+
+ 
+DOWNLOADING HTML FILE USING REQUESTS
+
+##################################################
+# Jahnavi Kandakatla , Creation Date: 12/01/2012
+# Contrib C013547, Source Id 2327
+# Srinivas Reddy Eppa Modified on 24/05/2019: Upgraded Version, python was downloading wrong file, ignored "browser.search_link()"
+##################################################
+from __future__ import unicode_literals
+
+import pandas as pd
+import requests
+import json
+import csv
+import os
+from lxml import html
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+################################################################################
+# Mandatory import
+import spyder
+def run(parameters):
+    with spyder.post('http://localhost') as post:
+################################################################################
+        # URL of the index page
+        url = 'https://www.bps.go.id/id/statistics-table/2/MTk1NiMy/-seri-2010--2--pdb-triwulanan-atas-dasar-harga-konstan-menurut-pengeluaran--milyar-rupiah-.html'
+        response=requests.get(url,verify=False)
+        print(response.content)
+
+        filename = "%s\%s.html"%(parameters.download_directory,parameters.thread_name)
+
+        with open(filename,'wb') as f:
+              f.write(response.content)
+        post.downloaded_files.append(filename)
+        print('Downloaded {0}'.format(filename))
+        post.writeline_log('FILE;{0};{1};'.format(filename, os.stat(filename).st_size))
+
+
+
+
+################################################################################
+# Mandatory section
+if __name__ == '__main__':
+    spyder.runthread(__file__)
+
+################################################## 
+
+
+[S03471] Indeed Hiring Labs - Indeed Remote Tracker - Remote Job Postings By Sector_60090
+
+##################################################
+# Phillip John Sta Ana , Creation Date: 14/10/2025
+# Contrib C60090, Source Id 3471
+##################################################
+
+##################################################
+from __future__ import unicode_literals
+import time
+import pandas as pd
+import requests
+import os
+
+from io import StringIO
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+##################################################
+# Mandatory section 1/2
+# Import and Main program function
+import spyder
+def run(parameters):
+     with spyder.browser(version='4700') as browser:
+##################################################
+        # CSV raw file URL from GitHub
+        url = "https://raw.githubusercontent.com/hiring-lab/remote-tracker/main/remote_postings_sector.csv"
+
+        # download CSV
+        r = requests.get(url, verify=False)
+        df = pd.read_csv(StringIO(r.text))
+
+        # output file path
+        outputfilename = os.path.join(parameters.download_directory, parameters.thread_name + ".csv")
+
+        # save CSV
+        df.to_csv(outputfilename, index=False)
+
+        df.to_csv(outputfilename)
+        browser.browser.downloaded_file.append([{"filename":outputfilename}])
+        browser.browser.writeline_log('FILE;{0};{1};'.format(outputfilename, os.stat(outputfilename).st_size))
+
+
+
+
+##################################################
+# Mandatory section 2/2
+# Main program that starts the script
+# Do not edit this section and keep it
+# at the end of the script file
+if __name__ == '__main__':
+    spyder.runthread(__file__)
+
+##################################################
+
+
+
+
+
+
