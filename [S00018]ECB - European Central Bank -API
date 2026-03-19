@@ -1,0 +1,42 @@
+[S00018]ECB - European Central Bank -API
+
+# Nevedita Karri , Creation Date: 25/06/2012
+# Contrib C19083, Source Id 18
+# abarad, 19/8/2016 - link not working so used identifier search functionality
+# Sravya Mengavaram, Modified Date: 13/07/2017: slight change on search strings
+#Skomuravelli,Modified date:28/09/2018--There is change in the path--Modified it.
+##################################################
+from __future__ import unicode_literals
+
+##################################################
+# Mandatory section 1/2
+# Import and Main program function
+import spyder
+import time
+def run(parameters):
+    with spyder.post("http://localhost", version='4010') as post:
+##################################################
+        parameters.url = "https://data-api.ecb.europa.eu/service/data/ICP/M.U2.Y.XEFUN0+000000+X02200+X02200.3.INX"
+        post_data = {
+            "format": "csvdata",
+            "lastNObservations": "100",
+            "detail": "dataonly",
+        }
+        filename = parameters.thread_name + ".csv"
+        print filename
+        post.download(post_data, filename, use_get_request=True)
+        time.sleep(1)
+
+
+
+
+
+##################################################
+# Mandatory section 2/2
+# Main program that starts the script
+# Do not edit this section and keep it
+# at the end of the script file
+if __name__ == '__main__':
+    spyder.runthread(__file__)
+
+##################################################
