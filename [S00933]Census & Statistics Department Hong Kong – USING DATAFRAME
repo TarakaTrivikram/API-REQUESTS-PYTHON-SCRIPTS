@@ -1,0 +1,45 @@
+[S00933]Census & Statistics Department Hong Kong – USING DATAFRAME
+##################################################
+# Suneel K , Creation Date: 28/11/2017
+# Contrib C05843, Source Id 933
+# Srinivas Reddy Eppa, 25/07/2019: Modified python and upgraded version.
+##################################################
+
+##################################################
+from __future__ import unicode_literals
+import pandas as pd
+import requests
+import os
+##################################################
+# Mandatory section 1/2
+# Import and Main program function
+import spyder
+def run(parameters):
+    with spyder.browser(version='4692') as browser:
+##################################################
+        resp = requests.get("https://www.censtatd.gov.hk/api/get.php?id=410-50011&lang=en&param=N4KABGBEDGBukC4yghSBhA8gVQHIBUAlATUTAG1xU0A2AZgEZIAaK6yGhgJhbdUgaDe1WgE4A7MJEcGk1iKg0uTedPp0p7GqI2qtogCyb+nUZD4BdKgF9VkAM7wkKfgDUAggBkA+vnxlKBUhiAHtibwYAEwAHbwBSb3tjNEIAQwB3bwBZbwALAGtI70jzaisIWypIaIBTACcASxCS5z4HABdUuvaySC4ABi4Bphs7BpaoAwZ+gFoAVn7+oTsAG1SAOwBzXpr182sgA",verify=False)
+        data = resp.json()
+
+        df = pd.DataFrame(data['dataSet'])
+        df['figure'] = df['figure'].apply(lambda x: x if bool(x) else 0)
+
+        df = df[["COUNTRY",'COUNTRYDesc','period', 'svDesc','figure']]
+        df = df.rename(columns={"COUNTRYDesc":"Countries"})
+
+        df = df.pivot_table(columns=['svDesc','period'], index=["COUNTRY",'Countries'], values="figure", fill_value="")
+        df = df.applymap(lambda x: x if bool(x) else "")
+
+        outputfilename = parameters.download_directory + '\\' + parameters.thread_name + ".csv"
+        df.to_csv(outputfilename)
+        browser.browser.downloaded_file.append([{"filename":outputfilename}])
+        browser.browser.writeline_log('FILE;{0};{1};'.format(outputfilename, os.stat(outputfilename).st_size))
+
+
+##################################################
+# Mandatory section 2/2
+# Main program that starts the script
+# Do not edit this section and keep it
+# at the end of the script file
+if __name__ == '__main__':
+    spyder.runthread(__file__)
+
